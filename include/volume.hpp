@@ -14,9 +14,11 @@ class constant_medium : public hitable {
       phase_function = new isotropic(a);
     }
 
-    virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const;
+    virtual bool hit(const ray& r, const float t_min,
+                     const float t_max, hit_record& rec) const;
 
-    virtual bool bounding_box(float t0, float t1, aabb& box) const {
+    virtual bool bounding_box(const float t0, const float t1, aabb& box) 
+      const {
       return boundary->bounding_box(t0, t1, box);
     }
 
@@ -25,11 +27,13 @@ class constant_medium : public hitable {
     material *phase_function;
 };
 
-bool constant_medium::hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
+bool constant_medium::hit(const ray& r, const float t_min, const float t_max, 
+                          hit_record& rec) const {
   bool db = (drand48() < 0.00001);
   db = false;
   hit_record rec1, rec2;
-  if (boundary->hit(r, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), rec1)) {
+  if (boundary->hit(r, std::numeric_limits<float>::min(), 
+        std::numeric_limits<float>::max(), rec1)) {
     if (boundary->hit(r, rec1.t+0.0001, std::numeric_limits<float>::max(), rec2)) {
       if (db) {
         std::cerr << "\nt0 t1 "  << rec1.t << " " << rec2.t << "\n";

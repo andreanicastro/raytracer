@@ -8,19 +8,19 @@ class bvh_node : public hitable {
   public:
     bvh_node() {}
     bvh_node(hitable **l, int n, float time0, float time1);
-    virtual bool hit(const ray& r, float tmin, float tmax, hit_record&rec) const;
-    virtual bool bounding_box(float t0, float t1, aabb& box) const;
+    virtual bool hit(const ray& r, const float t_min, const float t_max, hit_record&rec) const;
+    virtual bool bounding_box( const float t0,  const float t1, aabb& box) const;
     hitable *left;
     hitable *right;
     aabb box;
 };
 
-bool bvh_node::bounding_box(float t0, float t1, aabb& b) const {
+bool bvh_node::bounding_box( const float t0,  const float t1, aabb& b) const {
   b = box;
   return true;
 }
 
-bool bvh_node::hit(const ray& r, float t_min, float t_max, hit_record& rec) const {
+bool bvh_node::hit(const ray& r, const float t_min, const float t_max, hit_record& rec) const {
   if (box.hit(r, t_min, t_max)) {
     hit_record left_rec, right_rec;
     bool hit_left = left->hit(r, t_min, t_max, left_rec);
