@@ -49,13 +49,13 @@ bool constant_medium::hit(const ray& r, const float t_min, const float t_max,
       } if (rec1.t < 0) {
         rec1.t = 0;
       }
-      float distance_inside_boundary = (rec2.t - rec1.t) * r.direction().length();
+      float distance_inside_boundary = (rec2.t - rec1.t) * r.direction().norm();
       float hit_distance = -(1.f / density) * std::log(drand48());
       if (hit_distance < distance_inside_boundary) {
         if (db) {
           std::cerr << "hit_distance = " << hit_distance << "\n";
         }
-        rec.t = rec1.t + hit_distance / r.direction().length();
+        rec.t = rec1.t + hit_distance / r.direction().norm();
         if (db) {
           std::cerr << "rec.t = " << rec.t << "\n";
         }
@@ -63,7 +63,7 @@ bool constant_medium::hit(const ray& r, const float t_min, const float t_max,
         if (db) {
           std::cerr << "rec.p = " << rec.p << "\n";
         }
-        rec.normal = vec3(1, 0, 0); // Arbitrary;
+        rec.normal = Eigen::Vector3f(1, 0, 0); // Arbitrary;
         rec.mat_ptr = phase_function;
         return true;
       }

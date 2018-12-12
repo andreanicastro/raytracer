@@ -7,17 +7,17 @@
 class box: public hitable {
   public:
     box() {}
-    box(const vec3& p0, const vec3& p1, material *ptr);
+    box(const Eigen::Vector3f& p0, const Eigen::Vector3f& p1, material *ptr);
     virtual bool hit(const ray& r, const float t0, const float t1, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const {
       box = aabb(pmin, pmax);
       return true;
     }
-    vec3 pmin, pmax;
+    Eigen::Vector3f pmin, pmax;
     hitable* list_ptr;
 };
 
-box::box(const vec3& p0, const vec3& p1, material *ptr) {
+box::box(const Eigen::Vector3f& p0, const Eigen::Vector3f& p1, material *ptr) {
   pmin = p0;
   pmax = p1;
   hitable** list = new hitable*[6];

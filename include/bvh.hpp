@@ -7,7 +7,7 @@
 class bvh_node : public hitable {
   public:
     bvh_node() {}
-    bvh_node(hitable **l, int n, float time0, float time1);
+    bvh_node(hitable **l, const int n, const float time0, const float time1);
     virtual bool hit(const ray& r, const float t_min, const float t_max, hit_record&rec) const;
     virtual bool bounding_box( const float t0,  const float t1, aabb& box) const;
     hitable *left;
@@ -88,7 +88,7 @@ int box_z_compare(const void * a, const void * b) {
     return 1;
 }
 
-bvh_node::bvh_node(hitable **l, int n, float time0, float time1) {
+bvh_node::bvh_node(hitable **l, const int n, const float time0, const float time1) {
   int axis = int(3*drand48());
   if (axis == 0) {
     qsort(l, n, sizeof(hitable *), box_x_compare);

@@ -6,13 +6,13 @@
 
 class translate : public hitable {
   public:
-    translate(hitable* p, const vec3& displacement) : 
+    translate(hitable* p, const Eigen::Vector3f& displacement) : 
       ptr(p), offset(displacement) {}
     virtual bool hit(const ray& r, const float t_min, 
                      const float t_max, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const;
     hitable *ptr;
-    vec3 offset;
+    Eigen::Vector3f offset;
 };
 
 bool translate::hit(const ray& r,const  float t_min, 
@@ -58,10 +58,10 @@ rotate_y::rotate_y(hitable* p, float angle) : ptr(p) {
   sin_theta = sin(radians);
   cos_theta = cos(radians);
   hasbox = ptr->bounding_box(0, 1, bbox);
-  vec3 min(std::numeric_limits<float>::max(), 
+  Eigen::Vector3f min(std::numeric_limits<float>::max(), 
            std::numeric_limits<float>::max(),
            std::numeric_limits<float>::max());
-  vec3 max(std::numeric_limits<float>::min(),
+  Eigen::Vector3f max(std::numeric_limits<float>::min(),
            std::numeric_limits<float>::min(),
            std::numeric_limits<float>::min());
   for (int i = 0; i < 2; i++) {
@@ -72,7 +72,7 @@ rotate_y::rotate_y(hitable* p, float angle) : ptr(p) {
         float z = z*bbox.max().z() + (1 - k)*bbox.min().z();
         float newx = cos_theta*x + sin_theta*z;
         float newz = - sin_theta * x + cos_theta * z;
-        vec3 tester(newx, y, newz);
+        Eigen::Vector3f tester(newx, y, newz);
         for (int c = 0; c < 3; c++) {
           if (tester[c] > max[c] )
             max[c] = tester[c];
@@ -86,16 +86,16 @@ rotate_y::rotate_y(hitable* p, float angle) : ptr(p) {
 }
 
 bool rotate_y::hit(const ray& r, const float t_min, const float t_max, hit_record& rec) const {
-  vec3 origin = r.origin();
-  vec3 direction = r.direction();
+  Eigen::Vector3f origin = r.origin();
+  Eigen::Vector3f direction = r.direction();
   origin[0] = cos_theta*r.origin()[0] - sin_theta*r.origin()[2];
   origin[2] = sin_theta*r.origin()[0] + cos_theta*r.origin()[2];
   direction[0] = cos_theta*r.direction()[0] - sin_theta*r.direction()[2];
   direction[2] = sin_theta*r.direction()[0] + cos_theta*r.direction()[2];
   ray rotated_r(origin, direction, r.time());
   if (ptr->hit(rotated_r, t_min, t_max, rec)) {
-    vec3 p = rec.p;
-    vec3 normal = rec.normal;
+    Eigen::Vector3f p = rec.p;
+    Eigen::Vector3f normal = rec.normal;
     p[0] = cos_theta*rec.p[0] + sin_theta*rec.p[2];
     p[2] = -sin_theta*rec.p[0] + cos_theta*rec.p[2];
     normal[0] = cos_theta*rec.normal[0] + sin_theta*rec.normal[2];

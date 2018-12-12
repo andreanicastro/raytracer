@@ -5,18 +5,23 @@
 #include "texture.hpp"
 #include "hitable.hpp"
 
-vec3 random_in_unit_sphere() {
-  vec3 p;
-  do { p = 2.0*vec3(drand48(), drand48(), drand48()) - vec3(1,1,1); } while (p.squared_length() >= 1.0); return p; } 
-vec3 reflect(const vec3& v, const vec3& n) {
-  return v - 2*dot(v,n)*n;
+Eigen::Vector3f random_in_unit_sphere() {
+  Eigen::Vector3f p;
+  do { 
+    p = 2.0*Eigen::Vector3f::Random() - Eigen::Vector3f(1,1,1); 
+  } while (p.dot(p) >= 1.0); 
+  return p;
+} 
+
+Eigen::Vector3f reflect(const Eigen::Vector3f& v, const Eigen::Vector3f& n) {
+  return v - 2*v.dot(n)*n;
 }
 
-bool refract(const vec3& v, const vec3 &n, float ni_over_nt, vec3 &refracted)
+bool refract(const Eigen::Vector3f& v, const Eigen::Vector3f &n, const float ni_over_nt, Eigen::Vector3f &refracted)
 {
-  vec3 uv = unit_vector(v);
-  float dt  = dot(uv,n);
-  float discriminant = 1.0 - ni_over_nt*ni_over_nt*(1.0 - dt*dt);
+  const Eigen::Vector3f uv = v/v.norm();
+  const float dt  = uv.dot(n);
+  const float discriminant = 1.0 - ni_over_nt*ni_over_nt*(1.0 - dt*dt);
   if (discriminant > 0) {
     refracted = ni_over_nt*(uv - n*dt) - n*sqrt(discriminant);
     return true;
@@ -26,7 +31,7 @@ bool refract(const vec3& v, const vec3 &n, float ni_over_nt, vec3 &refracted)
 }
 
 
-float schlick(float cosine, float ref_idx)
+float schlick(const float cosine, const float ref_idx)
 {
   float r0 = (1 - ref_idx) / (1 + ref_idx);
   r0 = r0*r0;
@@ -37,9 +42,9 @@ float schlick(float cosine, float ref_idx)
 class material {
   public: 
     virtual bool scatter(const ray &r_in, const hit_record &rec,
-        vec3 &attenuation, ray& scattered) const = 0;
-    virtual vec3 emitted(float u, float v, const vec3& p) const {
-      return vec3(0, 0, 0);
+        Eigen::Vector3f &attenuation, ray& scattered) const = 0;
+    virtual Eigen::Vector3f emitted(const float u, const float v, const Eigen::Vector3f& p) const {
+      return Eigen::Vector3f::Zero();
     }
 };
 
@@ -49,10 +54,10 @@ class lambertian : public material {
     lambertian(texture *a) : albedo(a) {}
 
     virtual bool  scatter(const ray &r_in, const hit_record &rec,
-        vec3 &attenuation, ray &scattered) const
+        Eigen::Vector3f &attenuation, ray &scattered) const
     {
 
-      vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+      Eigen::Vector3f target = rec.p + rec.normal + random_in_unit_sphere();
       scattered = ray(rec.p, target-rec.p, r_in.time());
       attenuation = albedo->value(rec.u, rec.v, rec.p);
       return true;
@@ -64,7 +69,7 @@ class lambertian : public material {
 
 class metal : public material {
   public:
-    metal(const vec3 a, float f): albedo(a) {
+    metal(const Eigen::Vector3f a, const float f): albedo(a) {
       if (f < 1) 
         fuzz = f;
       else
@@ -72,16 +77,16 @@ class metal : public material {
     }
   
     virtual bool scatter(const ray &r_in, const hit_record &rec,
-        vec3 &attenuation, ray &scattered) const
+        Eigen::Vector3f &attenuation, ray &scattered) const
     {
-      vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
+      const Eigen::Vector3f reflected = reflect(r_in.direction()/r_in.direction().norm(), rec.normal);
       scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
       attenuation = albedo;
-      return dot(scattered.direction(), rec.normal) > 0;
+      return scattered.direction().dot(rec.normal) > 0;
     }
 
     float fuzz;
-    vec3 albedo;
+    Eigen::Vector3f albedo;
 };
 
 
@@ -90,27 +95,27 @@ class dielectric : public material {
     dielectric(float ni) : ref_idx(ni) {}
 
     virtual bool scatter(const ray &r_in, const hit_record &rec,
-        vec3 &attenuation, ray &scattered) const 
+        Eigen::Vector3f &attenuation, ray &scattered) const 
     {
-      vec3 outward_normal;
-      vec3 reflected = reflect(r_in.direction(), rec.normal);
+      Eigen::Vector3f outward_normal;
+      Eigen::Vector3f reflected = reflect(r_in.direction(), rec.normal);
       float ni_over_nt;
-      attenuation = vec3(1.0,1.0,1.0);
-      vec3 refracted;
+      attenuation = Eigen::Vector3f::Ones();
+      Eigen::Vector3f refracted;
       float reflect_prob;
       float cosine;
-      if(dot(r_in.direction(), rec.normal) > 0)
+      if(r_in.direction().dot(rec.normal) > 0)
       {
         outward_normal = -rec.normal;
         ni_over_nt = ref_idx;
-        cosine = ref_idx * dot(r_in.direction(), rec.normal) / 
-          r_in.direction().length();
+        cosine = ref_idx * r_in.direction().dot(rec.normal) / 
+          r_in.direction().norm();
       }
       else 
       {
         outward_normal = rec.normal;
         ni_over_nt = 1.0/ref_idx;
-        cosine = -dot(r_in.direction(), rec.normal) / r_in.direction().length();
+        cosine = -r_in.direction().dot(rec.normal) / r_in.direction().norm();
       }
       if (refract(r_in.direction(), outward_normal, ni_over_nt, refracted))
       {
@@ -138,8 +143,9 @@ class diffuse_light : public material {
   public:
     diffuse_light(texture *a) : emit(a) {}
     virtual bool scatter(const ray& r_in, const hit_record& rec, 
-        vec3& attenuation, ray& scatter) const { return false;}
-    virtual vec3 emitted(float u, float v, const vec3& p) const {
+        Eigen::Vector3f& attenuation, ray& scatter) const { 
+      return false;}
+    virtual Eigen::Vector3f emitted(const float u, const float v, const Eigen::Vector3f& p) const {
       return emit->value(u, v, p);
     }
     
@@ -150,7 +156,7 @@ class diffuse_light : public material {
 class isotropic : public material {
   public: 
     isotropic(texture* a) : albedo(a) {}
-    virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
+    virtual bool scatter(const ray& r_in, const hit_record& rec, Eigen::Vector3f& attenuation, ray& scattered) const {
       scattered = ray(rec.p,random_in_unit_sphere());
       attenuation = albedo->value(rec.u, rec.v, rec.p);
       return true;

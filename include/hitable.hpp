@@ -3,6 +3,7 @@
 
 #include "ray.hpp"
 #include "aabb.hpp"
+#include <memory>
 
 
 class material;
@@ -10,9 +11,9 @@ class material;
 struct hit_record {
   float t;
   float u,v;
-  vec3 p;
-  vec3 normal;
-  material *mat_ptr;
+  Eigen::Vector3f p;
+  Eigen::Vector3f normal;
+  material* mat_ptr;
 };
 
 class hitable {
@@ -25,7 +26,7 @@ class hitable {
 
 class flip_normals : public hitable {
   public:
-    flip_normals(hitable *p) : ptr(p) {}
+    flip_normals(hitable* p) : ptr(p) {}
     virtual bool hit(const ray& r, const float t_min, 
                      const float t_max, hit_record& rec) const {
       if (ptr->hit(r, t_min, t_max, rec)) {
