@@ -221,7 +221,8 @@ Eigen::Vector3f color(const ray& r, hitable *world, int depth) {
     Eigen::Vector3f emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
     if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
       Eigen::Vector3f col = color(scattered, world, depth+1);
-      return emitted + attenuation * col;
+      Eigen::Vector3f col_att = attenuation.array() * col.array();
+      return emitted + col_att;
     }
     else
       return emitted;

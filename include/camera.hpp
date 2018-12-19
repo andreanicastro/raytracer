@@ -2,6 +2,8 @@
 #define CAMERA_HPP
 
 #include "ray.hpp"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 Eigen::Vector3f random_in_unit_disk() {
     Eigen::Vector3f p;
