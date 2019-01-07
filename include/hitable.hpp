@@ -13,7 +13,7 @@ struct hit_record {
   float u,v;
   Eigen::Vector3f p;
   Eigen::Vector3f normal;
-  material* mat_ptr;
+  std::shared_ptr<material> mat_ptr;
 };
 
 class hitable {

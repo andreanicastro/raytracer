@@ -8,14 +8,14 @@ class xy_rect : public hitable {
   public:
     xy_rect() {}
     xy_rect(float _x0, float _x1, float _y0, float _y1, 
-        float _k, material *mat) :
+        float _k,  std::shared_ptr<material> mat) :
       x0(_x0), x1(_x1), y0(_y0), y1(_y1), k(_k), mp(mat) {};
     virtual bool hit(const ray& r, const float t0, const float t1, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const {
       box = aabb(Eigen::Vector3f(x0, y0, k - 0.0001), Eigen::Vector3f(x1, y1, k + 0.0001));
       return true; 
     }
-    material *mp;
+    std::shared_ptr<material> mp;
     float x0, x1, y0, y1, k;
 };
 
@@ -40,13 +40,13 @@ class xz_rect: public hitable {
   public:
     xz_rect() {}
     xz_rect(float _x0, float _x1, float _z0, float _z1, float _k,
-        material* mat) :
+        std::shared_ptr<material> mat) :
       x0(_x0), x1(_x1), z0(_z0), z1(_z1), k(_k), mp(mat) {};
     virtual bool hit(const ray& r, const float t0, const float t1, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const {
       box = aabb(Eigen::Vector3f(x0, k-0.0001, z0), Eigen::Vector3f(x1, k+0.0001, z1));
       return true; }
-    material* mp;
+    std::shared_ptr<material> mp;
     float x0, x1, z0, z1, k;
 };
 
@@ -71,14 +71,14 @@ class yz_rect : public hitable {
   public: 
     yz_rect() {}
     yz_rect(float _y0, float _y1, float _z0, float _z1, float _k,
-        material* mat) :
+        std::shared_ptr<material> mat) :
       y0(_y0), y1(_y1), z0(_z0), z1(_z1), k(_k), mp(mat) {};
     virtual bool hit(const ray& r, const float t0, const float t1, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const {
       box = aabb(Eigen::Vector3f(k-0.0001, y0, z0), Eigen::Vector3f(k+0.0001, y1, z1));
       return true;
     }
-    material* mp;
+    std::shared_ptr<material> mp;
     float y0, y1, z0, z1, k;
 };
 

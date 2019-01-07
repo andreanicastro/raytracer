@@ -7,15 +7,15 @@
 class sphere: public hitable {
   public: 
     sphere() {}
-    sphere(Eigen::Vector3f cen, float r, material* mat) : center(cen), radius(r) {
-      mat_ptr = mat;
-    };
+    sphere(Eigen::Vector3f cen, float r, std::shared_ptr<material> mat) : 
+      center(cen), radius(r), mat_ptr(mat) {};
+
     virtual bool hit(const ray& r, const float t_min, const float t_max, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const;
     void get_sphere_uv(const Eigen::Vector3f& p, float& u, float& v) const;
     Eigen::Vector3f center;
     float radius;
-    material* mat_ptr;
+    std::shared_ptr<material> mat_ptr;
 };
 
 bool sphere::hit(const ray& r, const float t_min, const float t_max, hit_record& rec) const {
@@ -56,10 +56,11 @@ class moving_sphere : public hitable {
   public:
     moving_sphere() {}
     moving_sphere(Eigen::Vector3f cen0, Eigen::Vector3f cen1, const float t0, const float t1, float r, 
-        material *m) :
+        std::shared_ptr<material> m) :
       center0(cen0), center1(cen1), 
       time0(t0), time1(t1), 
       radius(r), mat_ptr(m) {};
+
     virtual bool hit(const ray& r, 
         const float t_min, const float t_max, hit_record& rec) const;
     virtual bool bounding_box(const float t0, const float t1, aabb& box) const;
@@ -68,7 +69,7 @@ class moving_sphere : public hitable {
     Eigen::Vector3f center0, center1;
     float time0, time1;
     float radius;
-    material *mat_ptr;
+    std::shared_ptr<material> mat_ptr;
 };
 
 Eigen::Vector3f moving_sphere::center(const float time) const {

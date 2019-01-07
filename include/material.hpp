@@ -17,7 +17,8 @@ Eigen::Vector3f reflect(const Eigen::Vector3f& v, const Eigen::Vector3f& n) {
   return v - 2*v.dot(n)*n;
 }
 
-bool refract(const Eigen::Vector3f& v, const Eigen::Vector3f &n, const float ni_over_nt, Eigen::Vector3f &refracted)
+bool refract(const Eigen::Vector3f& v, const Eigen::Vector3f &n, 
+    const float ni_over_nt, Eigen::Vector3f &refracted)
 {
   const Eigen::Vector3f uv = v/v.norm();
   const float dt  = uv.dot(n);
@@ -43,7 +44,8 @@ class material {
   public: 
     virtual bool scatter(const ray &r_in, const hit_record &rec,
         Eigen::Vector3f &attenuation, ray& scattered) const = 0;
-    virtual Eigen::Vector3f emitted(const float u, const float v, const Eigen::Vector3f& p) const {
+    virtual Eigen::Vector3f emitted(const float u, const float v, 
+        const Eigen::Vector3f& p) const {
       return Eigen::Vector3f::Zero();
     }
 };
@@ -51,7 +53,7 @@ class material {
 
 class lambertian : public material {
   public:
-    lambertian(texture *a) : albedo(a) {}
+    lambertian(std::shared_ptr<texture> a) : albedo(a) {}
 
     virtual bool  scatter(const ray &r_in, const hit_record &rec,
         Eigen::Vector3f &attenuation, ray &scattered) const
@@ -63,7 +65,11 @@ class lambertian : public material {
       return true;
     }
 
-    texture* albedo;
+    std::shared_ptr<texture> albedo;
+
+    static std::shared_ptr<lambertian> ptr(std::shared_ptr<texture> a) {
+      return std::shared_ptr<lambertian>(new lambertian(a));
+    }
 };
 
 
@@ -79,7 +85,8 @@ class metal : public material {
     virtual bool scatter(const ray &r_in, const hit_record &rec,
         Eigen::Vector3f &attenuation, ray &scattered) const
     {
-      const Eigen::Vector3f reflected = reflect(r_in.direction()/r_in.direction().norm(), rec.normal);
+      const Eigen::Vector3f reflected = 
+        reflect(r_in.direction()/r_in.direction().norm(), rec.normal);
       scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
       attenuation = albedo;
       return scattered.direction().dot(rec.normal) > 0;
@@ -87,6 +94,11 @@ class metal : public material {
 
     float fuzz;
     Eigen::Vector3f albedo;
+
+    static std::shared_ptr<metal> ptr(const Eigen::Vector3f a, const float f) {
+      return std::shared_ptr<metal>(new metal(a, f));
+    }
+
 };
 
 
@@ -137,31 +149,44 @@ class dielectric : public material {
     }
 
     float ref_idx;
+
+    static std::shared_ptr<dielectric> ptr(const float ni) {
+      return std::shared_ptr<dielectric>(new dielectric(ni));
+    }
 };
 
 class diffuse_light : public material {
   public:
-    diffuse_light(texture *a) : emit(a) {}
+    diffuse_light(std::shared_ptr<texture> a) : emit(a) {}
     virtual bool scatter(const ray& r_in, const hit_record& rec, 
         Eigen::Vector3f& attenuation, ray& scatter) const { 
       return false;}
-    virtual Eigen::Vector3f emitted(const float u, const float v, const Eigen::Vector3f& p) const {
+    virtual Eigen::Vector3f emitted(const float u, const float v, 
+        const Eigen::Vector3f& p) const {
       return emit->value(u, v, p);
     }
     
-    texture *emit;
+    std::shared_ptr<texture> emit;
+
+    static std::shared_ptr<diffuse_light> ptr(std::shared_ptr<texture> a) {
+      return std::shared_ptr<diffuse_light>(new diffuse_light(a));
+    }
 };
 
 
 class isotropic : public material {
   public: 
-    isotropic(texture* a) : albedo(a) {}
-    virtual bool scatter(const ray& r_in, const hit_record& rec, Eigen::Vector3f& attenuation, ray& scattered) const {
+    isotropic(std::shared_ptr<texture> a) : albedo(a) {}
+    virtual bool scatter(const ray& r_in, const hit_record& rec, 
+        Eigen::Vector3f& attenuation, ray& scattered) const {
       scattered = ray(rec.p,random_in_unit_sphere());
       attenuation = albedo->value(rec.u, rec.v, rec.p);
       return true;
     }
-    texture* albedo;
-};
+    std::shared_ptr<texture> albedo;
 
+    static std::shared_ptr<isotropic> ptr(std::shared_ptr<texture> a) {
+      return std::shared_ptr<isotropic>(new isotropic(a));
+    }
+};
 #endif
